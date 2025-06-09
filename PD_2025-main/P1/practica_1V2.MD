@@ -2,13 +2,15 @@
 
 ---
 
-## 🎯 Objetivo
+## Objetivo
 
-El objetivo de esta práctica es generar el parpadeo periódico de un LED utilizando un ESP32. Además, se emplea la salida serie para depuración y se comparan distintas técnicas: funciones estándar de Arduino, acceso directo a registros, y distintas formas de temporización. Finalmente, se analiza el rendimiento del microcontrolador.
+Esta práctica tiene como finalidad lograr el parpadeo periódico de un LED mediante el uso de un ESP32. Para ello, se utiliza la salida serie como herramienta 
+de depuración y se exploran diversas técnicas: desde funciones estándar de Arduino hasta el acceso directo a registros y distintos métodos de temporización.
+Al final, se evalúa el rendimiento del microcontrolador.
 
 ---
 
-## ⚙️ Microcontrolador: ESP32
+## Microcontrolador: ESP32
 
 ### Imagen del ESP32
 
@@ -20,7 +22,7 @@ El objetivo de esta práctica es generar el parpadeo periódico de un LED utiliz
 
 ---
 
-## 🔧 Descripción de la funcionalidad
+##  Descripción de la funcionalidad
 
 - Iniciar pin de LED como salida
 - Bucle infinito:
@@ -39,7 +41,7 @@ El microcontrolador que utilizaremos es el ya comentado en la introducción  **E
 
 ---
 
-## 🧪 Implementaciones
+##  Implementaciones
 
 ### 🟢 1. Código básico
 
@@ -100,7 +102,7 @@ void loop() {
   while (millis() - startMillis < 500);
 }
 
-![Foto de Ruben Garcia](https://github.com/ruben22garcia/PD_2025/blob/main/P1/Practica1/IMG_748E83AF-4ED5-4C90-9EE6-65B3522506C6.JPEG)
+![Foto de Marti Fontseca](https://github.com/martifontseca/PD_2025/blob/main/P1/Practica1/IMG_748E83AF-4ED5-4C90-9EE6-65B3522506C6.JPEG)
 
 
 ### 🟢 3. Acceso directo a registros + espera activa
@@ -183,7 +185,7 @@ void loop() {
 
 
 
-🧠 Tiempo libre del procesador
+ Tiempo libre del procesador
 
 Durante las esperas activas (delay() o while()), el procesador no ejecuta otras tareas, pero tampoco realiza trabajo útil (bloqueo activo). Esto significa que:
 
@@ -191,14 +193,14 @@ Durante las esperas activas (delay() o while()), el procesador no ejecuta otras 
 
     Tiempo "libre" (esperando): ~99.9% del tiempo.
 
-✅ Conclusiones
+ Conclusiones
 
-    El uso de registros es más eficiente y permite alcanzar frecuencias más altas.
+El acceso directo a registros ofrece mayor eficiencia y permite alcanzar frecuencias de parpadeo más elevadas.
 
-    El uso de funciones Arduino es más legible, pero introduce latencias y es menos preciso.
+Las funciones estándar de Arduino mejoran la legibilidad del código, pero introducen latencias y reducen la precisión temporal.
 
-    La espera activa con millis() permite mantener el control sin usar delay(), pero consume CPU.
+El uso de espera activa mediante millis() permite evitar el uso de delay(), manteniendo el control del flujo, aunque a costa de un mayor uso de CPU.
 
-    El puerto serie reduce significativamente la frecuencia máxima de parpadeo.
+La comunicación por puerto serie impacta negativamente en el rendimiento, reduciendo considerablemente la frecuencia máxima de parpadeo.
 
-    El ESP32 tiene una alta capacidad de respuesta cuando no se bloquea con delay() o Serial.
+El ESP32 demuestra una alta capacidad de respuesta, siempre que no se vea bloqueado por llamadas a delay() o el uso intensivo del puerto serie.
