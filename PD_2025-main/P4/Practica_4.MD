@@ -58,16 +58,13 @@ Donde podemos ver que se están ejecutando dos tareas simultáneamente en los do
 
 ### 2. Explicar el funcionamiento 
 
-Este código es un ejemplo de cómo utilizar FreeRTOS. Este es un sistema operativo que permite la ejecución concurrente de múltiples tareas en los microcontroladores.
-1. Para trabajar con este sistema debemos incluir la biblioteca `<FreeRTOS.h>`.
-2. Se define una constante led1 que representa el pin al que está conectado el LED.
-3. Después se declara una función llamada `anotherTask`, que será la tarea que se creará como una tarea separada en FreeRTOS.
-   - Simplemente imprime un mensaje en serie cada segundo en un bucle infinito.
-   - Al final de esta función se utiliza `vTaskDelete(NULL)` para eliminar la tarea, pero como el bucle es infinito, nunca se ejecutará este comando.
-5. Función `setup()`:
-   - Se inicia la comunicación serial y se crea una nueva tarea utilizando `xTaskCreate()` con los siguientes parámetros: `anotherTask` especifica la función que se ejecutará de simultáneamente. `"another Task"` es el nombre de la tarea. `10000` es el tamaño del stack asignado a la tarea en bytes. `1` es la prioridad de la tarea (0 prioridad más baja y 1 prioridad más alta).
-6. Función `loop()`:
-   - Esta función imprime un mensaje cada segundo. 
+Este código ejemplifica el uso de FreeRTOS, un sistema operativo en tiempo real que permite la ejecución concurrente de múltiples tareas en microcontroladores como el ESP32. Para utilizarlo, es necesario incluir la 
+biblioteca <FreeRTOS.h>. Se define una constante led1 que representa el pin al que está conectado un LED (aunque en este ejemplo no se interactúa con él directamente). Luego, se declara una función llamada anotherTask, que
+representa una tarea independiente creada con FreeRTOS; su funcionalidad consiste en imprimir un mensaje por el puerto serie cada segundo dentro de un bucle infinito. Aunque se incluye la llamada vTaskDelete(NULL) para
+eliminar la tarea, esta nunca se ejecuta debido a la naturaleza infinita del bucle. En la función setup(), se inicia la comunicación serial y se crea la tarea anotherTask mediante xTaskCreate(), pasando como parámetros: la 
+función a ejecutar, el nombre de la tarea ("another Task"), el tamaño del stack (10000 bytes), una prioridad (1, donde 0 es la más baja), y un puntero a un identificador de la tarea (NULL en este caso). Finalmente, la
+función loop() ejecuta su propio mensaje por el monitor serie cada segundo, lo que demuestra que ambas tareas —la del loop() y la creada con FreeRTOS— se ejecutan de forma concurrente. Este ejemplo básico ilustra cómo 
+FreeRTOS puede ser utilizado para estructurar programas multitarea en sistemas embebidos.
 
 
 
