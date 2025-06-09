@@ -1,8 +1,8 @@
 # PRACTICA 2 : INTERRUPCIONES 
 
-El objetivo de la practica es comprender el funcionamiento de las interrupciones.
+El objetivo de esta práctica es comprender el funcionamiento de las interrupciones en sistemas embebidos.
 
-Para lo cual realizaremos una practica  donde controlaremos  2 leds  de una forma periódica  y una entrada ; de forma que el uso de la entrada provoque un cambio de frecuencia de las oscilaciones  pero solo en un led.
+Para ello, se implementará un control periódico de dos LEDs y una entrada digital. La activación de dicha entrada modificará la frecuencia de oscilación de uno de los LEDs, mientras que el otro continuará con su frecuencia original. De esta manera, se podrá observar el efecto de las interrupciones y su aplicación en el control selectivo de tareas.
 
 
 ## Introducción teórica  
@@ -16,29 +16,25 @@ A un nivel básico, una interrupción es una señal que interrumpe la actividad 
 * Un evento programado, o Timer
 * Una llamada por software.
  
-Cuando un evento dispara una interrupción, la ejecución normal del micro se suspende (ordenadamente para poder volver) y salta a ejecutar una función especial que llamamos Interrupt Service Handler o ISH (Servicio de gestión de interrupción).
+Cuando ocurre un evento que genera una interrupción, la ejecución normal del microcontrolador se suspende de forma ordenada para poder reanudarse más adelante, y el control del programa salta a una función especial denominada Interrupt Service Handler (ISH), o rutina de servicio de interrupción.
 
-Cuando el ISH finaliza, el procesador vuelve tranquilamente al punto donde lo dejó y sigue con lo que estaba como si no hubiese pasado nada.
+Una vez que el ISH finaliza su ejecución, el procesador regresa al punto exacto donde se detuvo, continuando su flujo de instrucciones como si nada hubiera ocurrido.
 
- 
- El concepto de interrupción nace de la necesidad imperiosa de reaccionar de forma inmediata en respuesta a un acontecimiento electrónico fulgurante, que no admite demora. Bien sea por la urgencia del suceso o porque algo se podría perder de forma irrecuperable sino reaccionamos con suficiente presteza.
- 
+El concepto de interrupción surge de la necesidad de reaccionar de manera inmediata ante ciertos eventos electrónicos que ocurren con una rapidez tal que no admiten demora.
+Esto puede deberse a la urgencia del evento o al riesgo de perder información irrecuperable si no se responde con suficiente rapidez.
 
-Pero ¿Qué hay tan urgente que no pueda esperar? ¿Es que nuestros procesadores  no son lo suficientemente rápidos para ver cada poco si hay una señal de alarma? ¿Por qué complicarnos la vida con una cosa tan extravagante?
+¿Por qué usar interrupciones?
+Puede surgir la duda:
+¿Qué tipo de evento es tan urgente que no puede esperar? ¿Acaso un procesador no es lo suficientemente rápido como para verificar constantemente si ocurre algo?
 
-La respuesta como siempre es… depende. Nuestro procesador puede estar liado y solo leerá la señal de un pin de tanto en tanto. Y si la señal que aparece se desvanece antes de que hayamos ido a ver, ni siquiera lo sabremos, porque aunque los procesadores son rápidos una señal electrónica lo es varios millones de veces más. Este es otro motivo por el que usar delays tiene mucho peligro.
+La respuesta es: depende. Aunque los procesadores modernos son veloces, siguen ejecutando tareas secuencialmente. Si se recurre a una técnica como el polling —consistente en 
+revisar periódicamente el estado de una entrada o registro— es posible que una señal breve desaparezca antes de ser detectada. En esos casos, ni siquiera se sabrá que ocurrió. Además, técnicas como el uso de delay() pueden bloquear el flujo del programa, dificultando la detección oportuna de eventos.
 
- 
- El nombre de verificar periodicamente el tema ( entrada , registro ,,,) , se le llama **Polling**.
- 
+Ventajas de las interrupciones
+Las interrupciones ofrecen una forma elegante y eficiente de gestionar eventos externos o internos. Basta con definir una función específica que se ejecutará automáticamente 
+cuando ocurra una determinada interrupción, sin necesidad de comprobar constantemente el estado de una señal. El programa principal puede continuar con su lógica habitual, y solo se interrumpirá si realmente ocurre el evento configurado.
 
-Por otro lado las interrupciones nos ofrecen una ventaja enorme a la hora de organizar nuestro programa. Se define la función que se ejecutará al recibir una interrupción dada y se ejecuta limpiamente cuando ocurre, no hay que comprobar si se da o no una situación.
-
-Simplemente te olvidas y se ejecutará única y exclusivamente cuando se alce la interrupción. No me digáis que no es elegante (SI, es una obsesión).
-
-En realidad, nosotros funcionamos por interrupciones habitualmente, en respuesta a sucesos no previstos que nos sacan de la rutina habitual.
-
-Imagínate que estás viendo tu serie favorit
+De hecho, el comportamiento humano funciona de forma similar: muchas veces respondemos a estímulos inesperados que interrumpen nuestras rutinas diarias, como cuando suena una alarma mientras estamos viendo nuestra serie favorita.
     struct Button {
       const uint8_t PIN;
       uint32_t numberKeyPresses;
@@ -73,18 +69,22 @@ Imagínate que estás viendo tu serie favorit
       }
     }
 
-### informe
-  realizar el informe de funcionamiento  asi como las salidas que se obtienen a través de la impresión serie a en la tele y estas esperando a tu colega, amigo o novia.
+### Informe de la practica
+Durante esta práctica se exploró el uso de interrupciones en un microcontrolador ESP32, enfocándonos en cómo estas permiten responder de forma inmediata a eventos externos, sin necesidad de emplear técnicas de sondeo o polling. El objetivo fue ilustrar cómo, mediante interrupciones, podemos mantener un control eficiente del sistema sin desperdiciar ciclos de CPU en comprobaciones constantes.
 
-Hay dos maneras de abrirle la puerta. Una es pasar a ver si ha llegada cada, digamos dos minutos, para ver si esta con cara de pánfilo/pánfila en la puerta esperando a que le abramos.
+Analogía Explicativa
+Para entender mejor el funcionamiento de las interrupciones, consideremos una situación cotidiana: estás viendo tu serie favorita en la televisión, mientras esperas a que llegue alguien (un amigo, tu pareja, etc.).
 
-La otra es establecer una interrupción, para eso están los timbres. Cuando alguien llega, pulsa el timbre. Tu paras tu capitulo tranquilamente, dejas el refresco en la mesa y vas a abrirle.
+Tienes dos opciones para saber si ha llegado:
 
-Cuando vuelves con él, reanudas tu peli y recoges el refresco. ¿Qué tienen de raro las interrupciones? ¿Qué me decís del teléfono o de los Whatsapp? Es la misma idea. Y lo mismo pasa con tu Arduino.
+Polling (sondeo): Te levantas cada dos minutos a ver si está esperando en la puerta. Si llegó justo después de la última vez que miraste y se fue antes de la siguiente, nunca te enteraste. Esto consume tu atención y rompe tu concentración en la serie.
 
-¿Por qué voy a renunciar a las interrupciones y dedicarme a pasar por la puerta cada poco? Es absurdo. Las interrupciones no tienen nada de extraño ni de incognoscible. Dedícale un poco de tiempo y te encontrarás una herramienta magnifica que te resolverá limpiamente más de un problema.
+Interrupción: Instalas un timbre. Cuando tu visitante llega, pulsa el timbre. En ese momento, interrumpes tu serie, pausas la imagen, dejas el refresco, y vas a abrir. Luego, vuelves al sofá, reanudas el capítulo y sigues disfrutando.
+Esto es precisamente lo que hacen las interrupciones: solo reaccionan cuando realmente pasa algo, y te permiten seguir con tu rutina mientras tanto.
 
-## tipos de interrupciones 
+Del mismo modo, el microcontrolador puede ejecutar su programa principal sin preocuparse por consultar constantemente si una señal ha cambiado. Si configuramos correctamente una interrupción, esta se activará automáticamente cuando ocurra un evento específico (por ejemplo, un cambio de estado en una entrada digital), ejecutará la rutina asociada y luego continuará con el flujo normal del programa.
+
+## Tipos de interrupciones 
 
 De los tres  sucesos que pueden disparar una interrupción
 
@@ -251,13 +251,16 @@ void loop() {
 }
 
 
-Este código configura un temporizador hardware en el ESP32 que genera una interrupción cada 1 segundo. La interrupción se maneja en la función onTimer(), que es una rutina de interrupción (ISR) donde se incrementa el contador interruptCounter cada vez que el temporizador se activa.
-En el setup(), se inicializa el temporizador con un prescaler de 80 (para que cuente en microsegundos) y se configura para generar una interrupción cada 1 segundo. Además, se habilita la interrupción y se adjunta la función onTimer() como la rutina a ejecutar cuando ocurra la interrupción.
-En el loop(), el programa verifica si el contador interruptCounter ha sido incrementado por la ISR. Si es así, el contador se decrementa de forma segura dentro de una sección crítica (portENTER_CRITICAL y portEXIT_CRITICAL), y el contador total de interrupciones (totalInterruptCounter) se incrementa. Luego, el número total de interrupciones se imprime en el Monitor Serie.
-El uso de las secciones críticas asegura que el acceso a las variables compartidas entre la ISR y el código principal esté sincronizado correctamente, evitando condiciones de carrera. Este proceso se repite continuamente, y el monitor serie muestra el número total de interrupciones ocurridas.
+Este código configura un temporizador hardware en el ESP32 para generar una interrupción cada 1 segundo, utilizando una rutina de servicio de interrupción (ISR) llamada onTimer(), que incrementa un contador 
+(interruptCounter) cada vez que se activa el temporizador. En la función setup(), se inicializa el temporizador con un prescaler de 80, lo que hace que cuente en microsegundos, y se configura para que dispare una 
+interrupción cada 1.000.000 de microsegundos (1 segundo). Además, se habilita la interrupción y se asocia la ISR correspondiente. En la función loop(), se comprueba si interruptCounter ha sido incrementado por la ISR y, 
+si es así, se accede de forma segura a las variables compartidas usando una sección crítica (portENTER_CRITICAL y portEXIT_CRITICAL) para evitar condiciones de carrera. En ese bloque, se decrementa interruptCounter y se 
+incrementa totalInterruptCounter, que representa el número total de interrupciones procesadas. Finalmente, este valor se imprime en el monitor serie, mostrando la cuenta acumulada de interrupciones. De este modo, se 
+demuestra cómo utilizar temporizadores e interrupciones para realizar tareas periódicas con precisión y eficiencia, sin recurrir a funciones bloqueantes como delay(), y asegurando un manejo correcto de la concurrencia 
+entre el código principal y las ISR.
 
 
-## ejercicio extra 
+## Ejercicio Extra 
 
 
 #include <Arduino.h>
@@ -345,37 +348,12 @@ Informe Breve – Ejercicio Extra: Control de Parpadeo con Pulsadores e Interrup
 
 Objetivo
 
-Controlar la frecuencia de parpadeo de un LED en un ESP32 usando dos pulsadores: uno para aumentar y otro para disminuir la frecuencia. Todo se gestiona con interrupciones por hardware, sin usar el bucle loop().
-
-Funcionamiento
-
-El LED parpadea con una frecuencia ajustable.
-
-Pulsador 1 incrementa la frecuencia (reduce el tiempo de parpadeo).
-
-Pulsador 2 disminuye la frecuencia (aumenta el tiempo de parpadeo).
-
-Se usa un temporizador por hardware para controlar el parpadeo.
-
-El código evita rebotes mediante un pequeño retardo (debounce).
-
-Características técnicas
-
-Se utilizan interrupciones para el temporizador y los pulsadores, permitiendo una respuesta inmediata sin ocupar el procesador con esperas activas.
-
-El tiempo de parpadeo se actualiza en tiempo real y se protege el acceso compartido a variables mediante secciones críticas.
-
-Ventajas
-
-Alta eficiencia del procesador (tiempo libre alto).
-
-Control preciso de la frecuencia.
-
-Escalable para otros sistemas de control de tiempo o eventos.
-
-Aplicaciones
-
-Este sistema puede servir como base para temporizadores, controladores PWM, sistemas de señales visuales, o como práctica avanzada de gestión de interrupciones en sistemas embebidos.
+Este sistema permite controlar la frecuencia de parpadeo de un LED en un ESP32 utilizando dos pulsadores conectados a interrupciones por hardware: uno para aumentar y otro para disminuir la frecuencia, todo sin utilizar 
+el bucle loop(). El parpadeo del LED es gestionado mediante un temporizador hardware cuya frecuencia se ajusta en tiempo real según la interacción del usuario, incrementando o reduciendo el tiempo de parpadeo. Las 
+interrupciones asociadas a los pulsadores permiten una respuesta inmediata, y se implementa un pequeño retardo (debounce) para evitar rebotes mecánicos. El acceso a variables compartidas entre interrupciones y lógica de
+temporización se protege mediante secciones críticas, garantizando estabilidad y sincronización. Esta implementación ofrece alta eficiencia al liberar al procesador de tareas de sondeo o espera activa, permite un control
+preciso de la frecuencia y resulta fácilmente escalable para otros sistemas que requieran control de eventos temporales. Es especialmente útil como base para temporizadores, controladores PWM, señales visuales 
+programables o como ejercicio práctico avanzado en el manejo de interrupciones en sistemas embebidos.
 
 
 
