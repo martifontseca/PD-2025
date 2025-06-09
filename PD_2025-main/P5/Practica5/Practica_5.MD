@@ -97,22 +97,14 @@ void loop()
 }
 ```
 
-En este caso, la salida por el puerto serie nos muestra en que dirección está el periférico que hemos conectado con el protocolo I2C, en código hexadecimal.
+En este caso, la salida por el puerto serie nos indica la dirección del periférico conectado al microcontrolador mediante el protocolo I2C, expresada en formato hexadecimal. Esta información es especialmente útil durante 
+la fase de desarrollo y prueba, ya que permite verificar que el dispositivo I2C está correctamente conectado y responde en la dirección esperada. El escaneo I2C identifica todos los dispositivos presentes en el bus, lo 
+cual facilita la detección de errores de conexión, conflictos de dirección o fallos en la comunicación.
 
 ### 2. Explicar el funcionamiento 
-1. Para el funcionamiento de este código y este protocolo I2C se debe incluir la librería `<Wire.h>`.
-2. Función `setup()`;
-   - Iniciamos la comunicación I2C con `Wire.begin()`.
-   - Iniciamos la comunicación serie con `Serial.begin(115200)` a 115200 baudios.
-   - `while(!Serial)` espera hasta que la conexión serie este disponible.
-   - Finalmente imprime un mensaje en el puerto serial para indicar que el programa está escaneando dispositivos I2C.
-3. Función `loop()`:
-   - Imprime un mensaje indicando que la comunicación está en curso.
-   - Iniciliza el contador de dispositivos encontrados con `nDevices = 0`.
-   - Un bucle for busca en todas las direcciones, desde la 1 hasta la 126.
-     - `Wire.beginTransmission(address);`: Intenta comenzar la transmisión a la dirección del dispositivo actual.
-     - `error = Wire.endTransmission();`: Finaliza la transmisión y verifica si el dispositivo en la dirección actual respondió.
-     - `if (error == 0) { ... }`: Si el dispositivo respondió, se imprime su dirección.
-     - `else if (error == 4) { ... }`: Si hubo un error (código 4), se imprime una indicación de error.
-   - Después del bucle for se verifica si se han encontrado dispositivos. En el caso de que se hayan encontrado se escribe el mensaje "done" y en caso contrario, se espera 5 segundos y vuelve a iniciar un nuevo escaneo.
-
+Para que este código funcione correctamente con el protocolo I2C, es necesario incluir la librería <Wire.h>. En la función setup(), se inicia la comunicación I2C con Wire.begin() y la comunicación serie con 
+Serial.begin(115200), estableciendo una velocidad de 115200 baudios; además, se espera a que la conexión serie esté disponible antes de imprimir un mensaje que indica el inicio del escaneo de dispositivos I2C. En la 
+función loop(), se muestra un mensaje indicando que la comunicación está activa, se inicializa un contador nDevices para contabilizar los dispositivos encontrados, y se recorre un bucle desde la dirección 1 hasta la 126,
+donde en cada iteración se intenta iniciar una transmisión con Wire.beginTransmission(address) y se termina con Wire.endTransmission(), que devuelve un código de error para determinar si un dispositivo respondió en esa
+dirección. Si error == 0, se imprime la dirección del dispositivo encontrado en formato hexadecimal; si error == 4, se señala un error de comunicación. Al finalizar el escaneo, si se detectaron dispositivos, se imprime 
+"done", y en caso contrario se espera 5 segundos antes de repetir el proceso, permitiendo así una detección continua y fiable de dispositivos I2C en el bus.
