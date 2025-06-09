@@ -1,4 +1,4 @@
-# PRACTICA 5 :  Buses de comunicación II (SPI)  
+# PRACTICA 6 :  Buses de comunicación II (SPI)  
 
 El objetivo de la practica es comprender el funcionamiento del bus spi 
 
@@ -50,20 +50,16 @@ void loop() {
 
 ### 1. Descibir la salida por el puerto serie 
 
-Este programa muestra cómo inicializar una tarjeta SD, abrir un archivo de texto en esa tarjeta, leer su contenido y enviarlo por el puerto serial.
-Por lo tanto, por el monitor se tendría que imprimir el contenido del fichero "archivo.txt".
+Este programa ejemplifica cómo inicializar una tarjeta SD, abrir un archivo de texto almacenado en ella llamado "archivo.txt", leer su contenido y enviarlo a través del puerto serial. Al ejecutarse, el programa monta la 
+tarjeta SD, accede al archivo especificado, y transmite línea por línea su contenido al monitor serie, permitiendo visualizar directamente el texto almacenado en la tarjeta. De esta forma, el usuario puede verificar 
+fácilmente el contenido del fichero mediante la consola serial.
 
 ### 2. Explicar el funcionamiento 
 
-1. Se incluyen dos bibliotecas. La primera `<SPI.h>` necesaria para el protocolo SPI. La segunda `<SD.h>` necesaria para controlar el acceso a los archivos de la tarjeta SD.
-2. `File myFile`: Es la declaración de un objeto de tipo File con nombre myFile, que se utilizará para manejar el archivo en la tarjeta SD.
-3. Función `setup()`:
-   - Se inicializa la comunicación serie a 9600 baudios.
-   - Se inicializa la tarjeta SD en el pin 4. (`SD.begin()`). Si la inicialización falla se imprime un mensaje.
-   - Si la inicialización es exitosa, se abre el archivo "archivo.txt" utilizando la función `SD.open("archivo.txt")`.
-   - Una vez abierto el archivo, se lee y se envía por el puerto serial utilizando un bucle while hasta que no hay más datos.
-   - Una vez que se lee todo el archivo, se cierra utilizando `myFile.close()`.
-
+El programa comienza incluyendo las bibliotecas <SPI.h> y <SD.h>, necesarias para manejar la comunicación SPI y el acceso a archivos en la tarjeta SD, respectivamente. Se declara un objeto File myFile para gestionar el 
+archivo a leer. En la función setup(), se inicializa la comunicación serie a 9600 baudios y se intenta inicializar la tarjeta SD en el pin 4 mediante SD.begin(). Si la inicialización falla, se imprime un mensaje de error;
+en caso contrario, se abre el archivo "archivo.txt" con SD.open(). Si el archivo se abre correctamente, se lee su contenido byte a byte en un bucle while y se envía a través del puerto serie para su visualización. 
+Finalmente, una vez leído todo el archivo, se cierra con myFile.close(), asegurando el correcto manejo de recursos.
 
 
 
