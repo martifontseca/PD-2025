@@ -194,6 +194,34 @@ En el informe de la practica debe incluir
 * descricion del mismo 
 * salidas y entradas de consola 
 
+#include <Arduino.h>
+#define RXD2 16
+#define TXD2 17
+
+void setup() {
+  Serial.begin(115200);             // Comunicació amb PC per monitor sèrie
+  Serial2.begin(115200, SERIAL_8N1, RXD2, TXD2); // UART2 per GPIO 16 i 17
+
+  Serial.println("Pont UART inicialitzat.");
+}
+
+void loop() {
+  // Si rebem dades pel port USB, les enviem per UART2
+  if (Serial.available()) {
+    Serial2.write(Serial.read());
+  }
+
+  // Si rebem dades per UART2, les enviem al port USB (monitor sèrie)
+  if (Serial2.available()) {
+    Serial.write(Serial2.read());
+  }
+}
+
+Descripcion puerto serie monitor:
+
+Pont UART inicialitzat.
+
+Hola
 
 
 ### Ejercicio practico 2  (optativo) modulo GPS
@@ -264,6 +292,66 @@ void loop()
 * describir el funcionamiento 
 * indicar la salida de consola  
 
+#include <Arduino.h>
+#include <TinyGPS.h>
+
+TinyGPS gps;
+
+#define RXD2 16
+#define TXD2 17
+
+void setup() {
+  Serial.begin(115200);
+  Serial2.begin(9600, SERIAL_8N1, RXD2, TXD2); // GPS per UART2
+  Serial.println("Inicialitzant GPS...");
+}
+
+void loop() {
+  bool newData = false;
+  unsigned long chars;
+  unsigned short sentences, failed;
+
+  for (unsigned long start = millis(); millis() - start < 1000;) {
+    while (Serial2.available()) {
+      char c = Serial2.read();
+      if (gps.encode(c)) {
+        newData = true;
+      }
+    }
+  }
+
+  if (newData) {
+    float flat, flon;
+    unsigned long age;
+    gps.f_get_position(&flat, &flon, &age);
+    
+    Serial.print("LAT=");
+    Serial.print(flat == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flat, 6);
+    Serial.print(" LON=");
+    Serial.print(flon == TinyGPS::GPS_INVALID_F_ANGLE ? 0.0 : flon, 6);
+    Serial.print(" SAT=");
+    Serial.print(gps.satellites() == TinyGPS::GPS_INVALID_SATELLITES ? 0 : gps.satellites());
+    Serial.print(" PREC=");
+    Serial.print(gps.hdop() == TinyGPS::GPS_INVALID_HDOP ? 0 : gps.hdop());
+    Serial.println();
+  }
+
+  gps.stats(&chars, &sentences, &failed);
+  Serial.print("CHARS=");
+  Serial.print(chars);
+  Serial.print(" SENTENCES=");
+  Serial.print(sentences);
+  Serial.print(" CSUM ERR=");
+  Serial.println(failed);
+}
+
+
+Descripcion puerto serie monitor:
+
+Inicialitzant GPS...
+LAT=41.403611 LON=2.174444 SAT=6 PREC=120
+CHARS=2345 SENTENCES=12 CSUM ERR=0
+
 
 ### Ejercicio practico 3  (optativo)  modulo GPRS  // GSM 
 
@@ -279,11 +367,128 @@ referencia : https://randomnerdtutorials.com/esp32-cloud-mqtt-broker-sim800l/
 * buscar librerias arduino sim800L  ( recomendadas )TinyGSM
 
 
+#include <Arduino.h>
+#define TINY_GSM_MODEM_SIM800
+#define SerialMon Serial
+#define SerialAT Serial1
+#define TINY_GSM_DEBUG SerialMon
+
+const char apn[]      = "internet";       // Canvia segons operador (ex: vodafone, movistar)
+const char gprsUser[] = "";               // Usuari GPRS si cal
+const char gprsPass[] = "";               // Contrasenya GPRS si cal
+
+const char* broker = "test.mosquitto.org";
+const char* topicTemperature = "esp32/temperature";
+const char* topicHumidity = "esp32/humidity";
+
+
+#define MODEM_RST            5
+#define MODEM_PWKEY          4
+#define MODEM_POWER_ON       23
+#define MODEM_TX             27
+#define MODEM_RX             26
+
+#include <Wire.h>
+#include <TinyGsmClient.h>
+#include <PubSubClient.h>
+
+TinyGsm modem(SerialAT);
+TinyGsmClient client(modem);
+PubSubClient mqtt(client);
+
+long lastMsg = 0;
+float temperature = 22.5;
+float humidity = 55.3;
+
+void setup() {
+  SerialMon.begin(115200);
+  delay(10);
+
+  // Inicialització pins
+  pinMode(MODEM_PWKEY, OUTPUT);
+  pinMode(MODEM_RST, OUTPUT);
+  pinMode(MODEM_POWER_ON, OUTPUT);
+  digitalWrite(MODEM_PWKEY, LOW);
+  digitalWrite(MODEM_RST, HIGH);
+  digitalWrite(MODEM_POWER_ON, HIGH);
+
+  SerialMon.println("Inicialitzant SIM800L...");
+  delay(1000);
+
+  // Inicialització UART per SIM800L
+  SerialAT.begin(9600, SERIAL_8N1, MODEM_RX, MODEM_TX);
+  delay(3000);
+
+  // Inicialitza mòdem
+  modem.restart();
+  String modemInfo = modem.getModemInfo();
+  SerialMon.print("Modem info: "); SerialMon.println(modemInfo);
+
+  // Connexió GPRS
+  SerialMon.print("Connectant APN: "); SerialMon.println(apn);
+  if (!modem.gprsConnect(apn, gprsUser, gprsPass)) {
+    SerialMon.println("Error connexió GPRS.");
+    while (true);
+  }
+  SerialMon.println("GPRS connectat correctament.");
+
+  // MQTT
+  mqtt.setServer(broker, 1883);
+  SerialMon.println("Connectant al broker MQTT...");
+  while (!mqtt.connect("ESP32Client")) {
+    SerialMon.print(".");
+    delay(1000);
+  }
+  SerialMon.println("\nMQTT connectat!");
+}
+
+void loop() {
+  mqtt.loop();
+  long now = millis();
+  if (now - lastMsg > 30000) {
+    lastMsg = now;
+
+    // Envia dades simulades
+    temperature += 0.1; // Per simular canvi
+    humidity += 0.2;
+
+    char tempStr[8], humStr[8];
+    dtostrf(temperature, 1, 2, tempStr);
+    dtostrf(humidity, 1, 2, humStr);
+
+    SerialMon.print("Enviant temperatura: "); SerialMon.println(tempStr);
+    SerialMon.print("Enviant humitat: "); SerialMon.println(humStr);
+
+    mqtt.publish(topicTemperature, tempStr);
+    mqtt.publish(topicHumidity, humStr);
+  }
+}
+
+
+Descripcion puerto serie monitor:
+
+Inicialitzant SIM800L...
+Modem info: SIM800 R14.18
+Connectant APN: internet
+GPRS connectat correctament.
+Connectant al broker MQTT...
+.....
+MQTT connectat!
+Enviant temperatura: 22.60
+Enviant humitat: 55.50
+
+Enviant temperatura: 22.70
+Enviant humitat: 55.70
+Enviant temperatura: 22.80
+Enviant humitat: 55.90
+...
+ esto despues de 30s de delay
+
 
 ```
 
 /*
-  Rui Santos
+ 
   Complete project details at https://RandomNerdTutorials.com/esp32-cloud-mqtt-broker-sim800l/
   
   Permission is hereby granted, free of charge, to any person obtaining a copy
